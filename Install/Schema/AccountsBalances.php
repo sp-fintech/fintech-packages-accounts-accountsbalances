@@ -22,29 +22,56 @@ class AccountsBalances
                     ]
                 ),
                 new Column(
-                    'first_name',
+                    'account_id',
                     [
-                        'type'          => Column::TYPE_VARCHAR,
-                        'size'          => 50,
+                        'type'          => Column::TYPE_INTEGER,
                         'notNull'       => true,
                     ]
                 ),
                 new Column(
-                    'last_name',
+                    'user_id',
                     [
-                        'type'          => Column::TYPE_VARCHAR,
-                        'size'          => 50,
+                        'type'          => Column::TYPE_INTEGER,
                         'notNull'       => true,
                     ]
-                )
-            ],
-            'indexes' => [
-                new Index(
-                    'column_UNIQUE',
+                ),
+                new Column(
+                    'date',
                     [
-                        'last_name'
-                    ],
-                    'UNIQUE'
+                        'type'          => Column::TYPE_VARCHAR,
+                        'size'          => 15,
+                        'notNull'       => true,
+                    ]
+                ),
+                new Column(
+                    'amount',
+                    [
+                        'type'          => Column::TYPE_FLOAT,
+                        'notNull'       => true,
+                    ]
+                ),
+                new Column(
+                    'type',
+                    [
+                        'type'          => Column::TYPE_VARCHAR,
+                        'size'          => 10,
+                        'notNull'       => true,
+                    ]
+                ),
+                new Column(
+                    'in_use',
+                    [
+                        'type'          => Column::TYPE_BOOLEAN,
+                        'notNull'       => true,
+                    ]
+                ),
+                new Column(
+                    'details',
+                    [
+                        'type'          => Column::TYPE_VARCHAR,
+                        'size'          => 4096,
+                        'notNull'       => false,
+                    ]
                 )
             ],
             'options' => [
@@ -60,7 +87,10 @@ class AccountsBalances
             new Index(
                 'column_INDEX',
                 [
-                    'first_name'
+                    'account_id',
+                    'user_id',
+                    'date',
+                    'type'
                 ],
                 'INDEX'
             )

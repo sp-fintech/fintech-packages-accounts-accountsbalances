@@ -8,7 +8,17 @@ class AppsFintechAccountsBalances extends BaseModel
 {
     public $id;
 
-    public $first_name;
+    public $account_id;
 
-    public $last_name;
+    public $user_id;
+
+    public $date;
+
+    public $amount;
+
+    public $type;//Debit/Credit
+
+    public $in_use;
+
+    public $details;
 }
