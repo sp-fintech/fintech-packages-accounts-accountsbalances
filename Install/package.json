@@ -1,0 +1,51 @@
+{
+	"name" : "AccountsBalances",
+	"display_name" : "Fintech Accounts Balances",
+	"description" : "<p>Fintech Accounts Balances</p>",
+	"module_type" : "packages",
+	"app_type" : "fintech",
+	"category" : "accounts",
+	"version" : "0.0.0",
+	"repo" : "https://github.com/sp-fintech/fintech-packages-accounts-accountsbalances",
+	"class" : "Apps\\Fintech\\Packages\\Accounts\\Balances\\AccountsBalances",
+	"dependencies" : 
+	{
+		"core" : 
+		{
+			"name" : "Core",
+			"version" : "0.0.0-rc.12",
+			"repo" : "https://github.com/sp-framework/core"
+		},
+		"apptype" : 
+		{
+			"name" : "Fintech",
+			"version" : "0.3.0",
+			"repo" : "https://github.com/sp-fintech/fintech"
+		},
+		"packages" : 
+		[
+			{
+				"name" : "AccountsUsers",
+				"version" : "0.1.0",
+				"repo" : "https://github.com/sp-fintech/fintech-packages-accounts-accountsusers"
+			}
+		],
+		"middlewares" : [],
+		"externals" : 
+		{
+			"composer" : 
+			{
+				"require" : []
+			},
+			"config" : 
+			{
+				"allow-plugins" : []
+			},
+			"extra" : 
+			{
+				"patches" : []
+			}
+		}
+	},
+	"settings" : []
+}
