@@ -103,6 +103,11 @@ class AccountsBalances extends BasePackage
         $this->addResponse('Error', 1);
     }
 
+    public function getUserEquity($data)
+    {
+        return $this->recalculateUserEquity($data);
+    }
+
     public function recalculateUserEquity($data)
     {
         if ($this->config->databasetype === 'db') {
@@ -117,9 +122,7 @@ class AccountsBalances extends BasePackage
         } else {
             $conditions =
                 [
-                    'conditions'    => [
-                        ['user_id', '=', (int) $data['user_id']]
-                    ]
+                    'conditions'    => ['user_id', '=', (int) $data['user_id']]
                 ];
         }
 
@@ -161,7 +164,16 @@ class AccountsBalances extends BasePackage
             }
         }
 
-        $this->addResponse('Recalculated', 0, ['equity_balance' => str_replace('EN_ ', '', (new \NumberFormatter('en_IN', \NumberFormatter::CURRENCY))->formatCurrency($accountsUser['equity_balance'], 'en_IN'))]);
+        $this->addResponse('Recalculated',
+                           0,
+                           [
+                                'equity_balance' => str_replace('EN_ ',
+                                                                '',
+                                                                (new \NumberFormatter('en_IN', \NumberFormatter::CURRENCY))
+                                                                    ->formatCurrency($accountsUser['equity_balance'], 'en_IN')
+                                                                )
+                            ]
+        );
 
         return $accountsUser['equity_balance'];
     }
