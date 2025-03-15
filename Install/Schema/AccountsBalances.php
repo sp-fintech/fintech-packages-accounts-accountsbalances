@@ -59,9 +59,9 @@ class AccountsBalances
                     ]
                 ),
                 new Column(
-                    'in_use',
+                    'used_by',
                     [
-                        'type'          => Column::TYPE_BOOLEAN,
+                        'type'          => Column::TYPE_JSON,
                         'notNull'       => true,
                     ]
                 ),
