@@ -31,10 +31,18 @@ class AccountsBalances extends BasePackage
     public function addAccountsBalances($data)
     {
         $data['account_id'] = $this->access->auth->account()['id'];
-        $data['in_use'] = false;
+        if (isset($data['used_by'])) {
+            $data['used_by'] = $this->helper->encode([$data['used_by']]);
+        } else {
+            $data['used_by'] = $this->helper->encode([]);
+        }
+
+        if (!isset($data['type'])) {
+            $data['type'] = 'debit';
+        }
 
         if ($data['type'] === 'credit') {
-            $equity_balance = $this->recalculateUserEquity($data);
+            $equity_balance = $this->recalculateUserEquity($data)['equity_balance'];
 
             if ((float) $data['amount'] > $equity_balance) {
                 $this->addResponse('Cannot credit more than balance. Balance available : ' . $equity_balance, 1);
@@ -57,10 +65,14 @@ class AccountsBalances extends BasePackage
         $accountsbalance = $this->getById((int) $data['id']);
 
         if ($accountsbalance) {
-            if ($accountsbalance['in_use'] == true) {
-                $this->addResponse('Balance in use, cannot modify', 1);
+            if (isset($data['used_by'])) {
+                if (is_string($accountsbalance['used_by'])) {
+                    $accountsbalance['used_by'] = $this->helper->decode($accountsbalance['used_by'], true);
+                }
 
-                return false;
+                if (!in_array($data['used_by'], $accountsbalance['used_by'])) {
+                    array_push($accountsbalance['used_by'], $data['used_by']);
+                }
             }
 
             $dataType = $accountsbalance['type'];
@@ -83,29 +95,42 @@ class AccountsBalances extends BasePackage
     {
         $accountsbalance = $this->getById((int) $data['id']);
 
-
         if ($accountsbalance) {
-            if ($accountsbalance['in_use'] == true) {
+            if (is_string($accountsbalance['used_by'])) {
+                $accountsbalance['used_by'] = $this->helper->decode($accountsbalance['used_by'], true);
+            }
+
+            if (count($accountsbalance['used_by']) > 0) {
                 $this->addResponse('Balance in use, cannot remove', 1);
 
                 return false;
             }
 
+            if ($accountsbalance['type'] === 'debit') {
+                $equity_balance = $this->recalculateUserEquity($accountsbalance)['equity_balance'];
+
+                if ($equity_balance < $accountsbalance['amount']) {
+                    $this->addResponse('Amount is greater than Equity Balance, Cannot remove', 1);
+
+                    return false;
+                }
+            }
+
             if ($this->remove($data['id'])) {
                 $this->recalculateUserEquity($accountsbalance);
 
-                $this->addResponse('Success');
+                $this->addResponse('Removed Balance.');
 
                 return true;
             }
         }
 
-        $this->addResponse('Error', 1);
+        $this->addResponse('Error removing balance.', 1);
     }
 
     public function getUserEquity($data)
     {
-        return $this->recalculateUserEquity($data);
+        return $this->recalculateUserEquity($data)['equity_balance'];
     }
 
     public function recalculateUserEquity($data)
@@ -171,10 +196,24 @@ class AccountsBalances extends BasePackage
                                                                 '',
                                                                 (new \NumberFormatter('en_IN', \NumberFormatter::CURRENCY))
                                                                     ->formatCurrency($accountsUser['equity_balance'], 'en_IN')
+                                                                ),
+                                'credit_total' => str_replace('EN_ ',
+                                                                '',
+                                                                (new \NumberFormatter('en_IN', \NumberFormatter::CURRENCY))
+                                                                    ->formatCurrency($creditTotal, 'en_IN')
+                                                                ),
+                                'debit_total' => str_replace('EN_ ',
+                                                                '',
+                                                                (new \NumberFormatter('en_IN', \NumberFormatter::CURRENCY))
+                                                                    ->formatCurrency($debitTotal, 'en_IN')
                                                                 )
                             ]
         );
 
-        return $accountsUser['equity_balance'];
+        return [
+            'equity_balance' => $accountsUser['equity_balance'],
+            'credit_total' => $creditTotal,
+            'debit_total' => $debitTotal
+        ];
     }
 }
