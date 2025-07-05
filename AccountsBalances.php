@@ -31,12 +31,6 @@ class AccountsBalances extends BasePackage
     public function addAccountsBalances($data)
     {
         $data['account_id'] = $this->access->auth->account()['id'];
-        if (isset($data['used_by'])) {
-            $data['used_by'] = $this->helper->encode([$data['used_by']]);
-        } else {
-            $data['used_by'] = $this->helper->encode([]);
-        }
-
         if (!isset($data['type'])) {
             $data['type'] = 'debit';
         }
@@ -65,19 +59,15 @@ class AccountsBalances extends BasePackage
         $accountsbalance = $this->getById((int) $data['id']);
 
         if ($accountsbalance) {
-            if (isset($data['used_by'])) {
-                if (is_string($accountsbalance['used_by'])) {
-                    $accountsbalance['used_by'] = $this->helper->decode($accountsbalance['used_by'], true);
-                }
+            if ($accountsbalance['type'] !== 'debit' &&
+                $accountsbalance['type'] !== 'credit'
+            ) {
+                $this->addResponse('Only Debit or Credit can be updated!', 1);
 
-                if (!in_array($data['used_by'], $accountsbalance['used_by'])) {
-                    array_push($accountsbalance['used_by'], $data['used_by']);
-                }
+                return false;
             }
 
-            $dataType = $accountsbalance['type'];
             $data = array_merge($accountsbalance, $data);
-            $data['type'] = $dataType;
 
             if ($this->update($data)) {
                 $this->recalculateUserEquity($data);
@@ -96,12 +86,10 @@ class AccountsBalances extends BasePackage
         $accountsbalance = $this->getById((int) $data['id']);
 
         if ($accountsbalance) {
-            if (is_string($accountsbalance['used_by'])) {
-                $accountsbalance['used_by'] = $this->helper->decode($accountsbalance['used_by'], true);
-            }
-
-            if (count($accountsbalance['used_by']) > 0) {
-                $this->addResponse('Balance in use, cannot remove', 1);
+            if ($accountsbalance['type'] !== 'debit' &&
+                $accountsbalance['type'] !== 'credit'
+            ) {
+                $this->addResponse('Only Debit or Credit can be removed!', 1);
 
                 return false;
             }

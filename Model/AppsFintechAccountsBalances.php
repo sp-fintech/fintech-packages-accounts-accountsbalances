@@ -16,9 +16,7 @@ class AppsFintechAccountsBalances extends BaseModel
 
     public $amount;
 
-    public $type;//Debit/Credit
-
-    public $used_by;
+    public $type;//Debit/Credit/DebitInTransit/CreditInTransit
 
     public $details;
 }
