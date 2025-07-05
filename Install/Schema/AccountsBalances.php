@@ -54,14 +54,7 @@ class AccountsBalances
                     'type',
                     [
                         'type'          => Column::TYPE_VARCHAR,
-                        'size'          => 10,
-                        'notNull'       => true,
-                    ]
-                ),
-                new Column(
-                    'used_by',
-                    [
-                        'type'          => Column::TYPE_JSON,
+                        'size'          => 20,
                         'notNull'       => true,
                     ]
                 ),
