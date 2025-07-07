@@ -139,21 +139,52 @@ class AccountsBalances extends BasePackage
                 ];
         }
 
-        $balances = $this->getByParams($conditions);
+        $balancesArr = $this->getByParams($conditions);
 
-        $debitTotal = 0;
-        $creditTotal = 0;
-        if ($balances && count($balances) > 0) {
-            foreach ($balances as $balance) {
+        $balanceTotal = 0;
+        $balances = [];
+
+        if ($balancesArr && count($balancesArr) > 0) {
+            $balancesArr = msort($balancesArr, 'date');
+
+            foreach ($balancesArr as $balanceKey => &$balance) {
                 if ($balance['type'] === 'debit') {
-                    $debitTotal = $debitTotal + $balance['amount'];
+                    $balance['balance'] = $balanceTotal = numberFormatPrecision($balanceTotal + $balance['amount']);
                 } else if ($balance['type'] === 'credit') {
-                    $creditTotal = $creditTotal + $balance['amount'];
+                    $balance['balance'] = $balanceTotal = numberFormatPrecision($balanceTotal - $balance['amount']);
+                }
+                // trace([$balance]);
+                //Fill the rest of dates with its previous balance.
+                if ($balanceKey !== count($balancesArr) - 1) {
+                    if ($balance['date'] !== $balancesArr[$balanceKey + 1]['date']) {
+                        $balances[$balance['date']] = $balance['balance'];
+
+                        $this->fillBalanceDays($balances, $balance, $balancesArr[$balanceKey + 1]);
+                    } else {
+                        $balances[$balance['date']] = $balance['balance'];
+                    }
+                } else {
+                    $balances[$balance['date']] = $balance['balance'];
+                }
+            }
+
+            if (count($balances) > 0) {
+                $lastDateOfBalance = \Carbon\Carbon::parse($this->helper->lastKey($balances));
+                $today = \Carbon\Carbon::now();
+                if ($today->gt($lastDateOfBalance)) {
+                    $startEndDates = (\Carbon\CarbonPeriod::between($this->helper->lastKey($balances), $today->toDateString()))->toArray();
+
+                    if (count($startEndDates) >= 2) {
+                        foreach ($startEndDates as $startEndDateKey => $startEndDate) {
+                            if ($startEndDateKey === 0) {
+                                continue;
+                            }
+                            $balances[$startEndDate->toDateString()] = $this->helper->last($balances);
+                        }
+                    }
                 }
             }
         }
-
-        $equityTotal = $debitTotal - $creditTotal;
 
         $accountsUsersModel = new AppsFintechAccountsUsers;
 
@@ -166,7 +197,7 @@ class AccountsBalances extends BasePackage
         }
 
         if ($accountsUser) {
-            $accountsUser['equity_balance'] = $equityTotal;
+            $accountsUser['equity_balance'] = $balanceTotal;
 
             if ($this->config->databasetype === 'db') {
                 $accountsUsersModel->assign($accountsUser);
@@ -185,23 +216,30 @@ class AccountsBalances extends BasePackage
                                                                 (new \NumberFormatter('en_IN', \NumberFormatter::CURRENCY))
                                                                     ->formatCurrency($accountsUser['equity_balance'], 'en_IN')
                                                                 ),
-                                'credit_total' => str_replace('EN_ ',
-                                                                '',
-                                                                (new \NumberFormatter('en_IN', \NumberFormatter::CURRENCY))
-                                                                    ->formatCurrency($creditTotal, 'en_IN')
-                                                                ),
-                                'debit_total' => str_replace('EN_ ',
-                                                                '',
-                                                                (new \NumberFormatter('en_IN', \NumberFormatter::CURRENCY))
-                                                                    ->formatCurrency($debitTotal, 'en_IN')
-                                                                )
+                                'balances' => $balances
                             ]
         );
 
         return [
             'equity_balance' => $accountsUser['equity_balance'],
-            'credit_total' => $creditTotal,
-            'debit_total' => $debitTotal
+            'balances' => $balances
         ];
+    }
+
+    protected function fillBalanceDays(&$balances, $balance, $nextTransaction)
+    {
+        $startEndDates = (\Carbon\CarbonPeriod::between($balance['date'], $nextTransaction['date']))->toArray();
+
+        if (count($startEndDates) > 2) {
+            foreach ($startEndDates as $dateKey => $date) {
+                if ($dateKey === 0 ||
+                    $dateKey === count($startEndDates) - 1
+                ) {
+                    continue;
+                }
+
+                $balances[$date->toDateString()] = $balance['balance'];
+            }
+        }
     }
 }
